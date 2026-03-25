@@ -13,18 +13,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Create SSH key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
       - name: Deploy to EC2
-  run: |
-    ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-      set -e
-      cd ~/myApp
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            cd ~/myApp
 
-      git fetch origin
-      git reset --hard origin/main
+            git fetch origin
+            git reset --hard origin/main
 
-      sudo docker stop myapp || true
-      sudo docker rm myapp || true
+            sudo docker stop myapp || true
+            sudo docker rm myapp || true
 
-      sudo docker build -t myapp:latest .
-      sudo docker run -d -p 80:5000 --name myapp myapp:latest
-    EOF
+            sudo docker build -t myapp:latest .
+            sudo docker run -d -p 80:5000 --name myapp myapp:latest
+          EOF
